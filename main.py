@@ -2,10 +2,10 @@ import os
 import logging
 import traceback
 import requests
-import cv2
-import pyautogui
 import psutil
 from dotenv import load_dotenv
+import time
+from mss import mss
 
 load_dotenv()
 
@@ -14,25 +14,26 @@ logging.basicConfig(filename='app.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 def capture_screenshot():
-    screenshot = pyautogui.screenshot()
-    screenshot.save(f"screenshots/screenshot_{int(time.time())}.png")
-
-def start_screen_recording():
-    # Implementation details in the next code block
-
-def stop_screen_recording():
-    # Implementation details in the next code block
+    with mss() as sct:
+        filename = f"screenshots/screenshot_{int(time.time())}.png"
+        os.makedirs('screenshots', exist_ok=True)
+        sct.shot(output=filename)
+        logging.info(f"Screenshot saved: {filename}")
 
 def run_app():
-    # Your main application logic here
     logging.info("Application started")
     try:
         # Your app code here
-        pass
+        for i in range(10):  # Simulate some work
+            time.sleep(1)
+            if i % 3 == 0:  # Capture screenshot every 3 seconds
+                capture_screenshot()
     except Exception as e:
         logging.error(f"An error occurred: {str(e)}")
         logging.error(traceback.format_exc())
         capture_screenshot()
+    finally:
+        capture_screenshot()  # Final screenshot
 
 def edit_github_file(file_path, new_content):
     github_token = os.getenv('GITHUB_TOKEN')
@@ -50,6 +51,7 @@ def edit_github_file(file_path, new_content):
     current_file = response.json()
 
     # Update the file
+    import base64
     data = {
         "message": "Update via Claude API",
         "content": base64.b64encode(new_content.encode()).decode(),
